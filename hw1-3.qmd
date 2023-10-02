@@ -1,0 +1,145 @@
+---
+title: "Homework DV 1-3"
+author: "Lina Sinsheimer"
+format: html
+embed-resources: true
+editor: visual
+---
+
+## Question 1
+
+```{r}
+#| message: false
+library(tidyverse)
+exercise_data <- read_csv("https://raw.githubusercontent.com/vaiseys/dav-course/main/Data/visualize_data.csv")
+glimpse(exercise_data)
+```
+
+I would predict that when the amount of exercise you get goes up, the BMI goes down.
+
+```{r}
+cor(exercise_data$Exercise, exercise_data$BMI)
+```
+
+```{r}
+ggplot(exercise_data, aes(x = Exercise, y = BMI)) +
+  geom_point() +
+  labs(x = "Exercise",
+       y = "BMI",
+       title = "Relationship between Exercise and BMI")
+```
+
+## Question 2
+
+```{r}
+#| message: false
+library(causact)
+library(tidyverse)
+glimpse(corruptDF)
+?corruptDF
+```
+
+CPI2017: Corruption Perceptions Index score for the year 2017. This measures the amount of public corruption that has been perceived, with 0 being very corrupt and 100 being very not corrupt.
+
+HDI2017: Human Development Index score for 2017. This measures various human development, such as longevity, education, and income.
+
+## Question 3
+
+```{r}
+library(ggplot2)
+
+ggplot(corruptDF, aes(x = HDI2017, y = CPI2017)) +
+  geom_point() +
+  labs(x = "HDI2017",
+       y = "CPI2017",
+       title = "Relationship between HDI2017 and CPI2017")
+
+```
+
+This graph shows there is a positive correlation between HDI and CPI, which means that as HDI increases, CPI does as well. Countries with higher human development also usually have lower corruption (as when the number for CPI rises, that means that there is less corruption).
+
+## Question 4
+
+```{r}
+ggplot(corruptDF, aes(x = HDI2017, y = CPI2017)) +
+  geom_point() +
+  geom_smooth(method = "lm") + 
+  labs(x = "HDI2017",
+       y = "CPI2017",
+       title = "Relationship between HDI2017 and CPI2017 (using lm)")
+```
+
+```{r}
+ggplot(corruptDF, aes(x = HDI2017, y = CPI2017)) +
+  geom_point() +
+  geom_smooth(method = "gam") + 
+  labs(x = "HDI2017",
+       y = "CPI2017",
+       title = "Relationship between HDI2017 and CPI2017 (using lm)")
+```
+
+The LM method stands for linear model, which assumes a normal distribution and a linear relationship between the variables, in this case the HDI and the CPI.
+
+The GAM method stands for general additive model, which still assumes a normal distribution, but non-linear relationship between the variables.
+
+I prefer GAM because it can capture more complex relationships between variables.
+
+## Question 5
+
+```{r}
+ggplot(corruptDF, aes(x = HDI2017, y = CPI2017, fill = region, color = region)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "gam")
+  labs(x = "HDI2017",
+       y = "CPI2017",
+       title = "Relationship between HDI2017 and CPI2017") +
+    theme_minimal()
+```
+
+```{r}
+ggplot(corruptDF, aes(x = HDI2017, y = CPI2017)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method="gam") +
+  labs(x = "HDI2017",
+       y = "CPI2017",
+       title = "Relationship between HDI2017 and CPI2017") +
+    facet_wrap(~region)
+```
+
+The first graph is definitely too cluttered and hard to read. Each region has a different trend, and when the lines are overlapping, it makes it too difficult to read and impossible to see each region's pattern.
+
+The second graph is using the facet wrap function to separate each region to see the patterns more clearly.
+
+## Question 6
+
+```{r}
+ggplot(corruptDF, aes(x = HDI2017, y = CPI2017)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "gam") +
+  labs(x = "HDI2017",
+       y = "CPI2017",
+       title = "Relationship between HDI2017 and CPI2017") +
+    facet_wrap(~region) +
+  scale_x_reverse()
+```
+
+## Question 7
+
+```{r}
+ggplot(corruptDF, aes(x = HDI2017, y = CPI2017)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "gam") +
+  labs(x = "HDI2017",
+       y = "CPI2017",
+       title = "Relationship between HDI and CPI in 2017",
+       caption = "Sources: transparency.org and hdr.undp.org",
+       subtitle = "Data Points are Countries") +
+    facet_wrap(~region) +
+  scale_x_reverse()
+```
+
+## Question 8
+
+```{r}
+ggsave(filename = "HDIandCPI.pdf")
+```
