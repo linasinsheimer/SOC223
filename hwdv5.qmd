@@ -1,0 +1,150 @@
+---
+title: "Homework DV 5"
+author: "Lina Sinsheimer"
+format: html
+editor: visual
+embed-resources: true
+---
+
+## Question 1
+
+```{r}
+library(tidyverse)
+wncaa <- read_csv("https://raw.githubusercontent.com/vaiseys/dav-course/main/Data/wncaa.csv")
+
+glimpse(wncaa)
+```
+
+```{r}
+ncaachamp <- wncaa %>%
+  filter(tourney_finish == "Champ")
+winpercentage <- ncaachamp %>%
+  group_by(school) %>%
+  summarize(N = n()) %>%
+  mutate(freq = N / sum(N),
+           pct = round((freq*100), 0))
+glimpse(ncaachamp)
+glimpse(winpercentage)
+```
+
+```{r}
+library(ggplot2)
+ggplot(winpercentage, aes(x = school, y = pct)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  labs(title = "Percentage of Tournaments Won by School",
+       x = "School",
+       y = "Percentage of Tournaments Won") +
+  theme_minimal() +
+  coord_flip()
+
+```
+
+The patterns I see are: UConn and Tennessee are the two teams that have won the most, and the rest of the schools have won around 5% of the time.
+
+## Question 2
+
+```{r}
+champ_names <- unique(ncaachamp$school)
+winners <- wncaa %>% 
+  filter(school %in% champ_names)
+```
+
+```{r}
+ggplot(winners, aes(x = reorder(school, seed, na.rm=TRUE), y = seed)) +
+  geom_boxplot(fill = "blue") +
+  labs(title = "Distribution of Seeds for Top Schools",
+       x = "School",
+       y = "Seed") +
+  theme_minimal() +
+  coord_flip()
+
+```
+
+Given their continued dominance, UConn and Tennessee have both low medians, which means that they have mostly had high seeds. It is interesting to see that anything out of a 3 seed is an outlier for both schools.
+
+```{r}
+ggplot(winners, aes(x = reorder(school, seed, na.rm = TRUE), y = seed)) +
+  geom_violin(fill = "blue") +
+  labs(title = "Distribution of Seeds for Top Schools",
+       x = "School",
+       y = "Seed") +
+  theme_minimal() +
+  coord_flip()
+```
+
+I think in general the boxplot is more helpful than the violin plot. On the boxplot you can see the median and the outliers more easily. The violin plot does give the viewer a better idea of the distribution.
+
+## Question 3
+
+```{r}
+ggplot(winners, aes(x = reorder(school, seed, na.rm = TRUE), y = seed)) +
+  geom_point(color = "blue") +
+  labs(title = "Distribution of Seeds for Top Schools",
+       x = "School",
+       y = "Seed") +
+  theme_minimal() +
+  coord_flip()
+
+```
+
+This is not an effective method of communicating the data because you cannot see the frequency of the data points or the distribution.
+
+## Question 4
+
+```{r}
+library(dplyr)
+winnerspercentage <- winners %>% 
+  group_by(school) %>% 
+  summarize_if(is.numeric, list(mean = mean, sd = sd))
+glimpse(winnerspercentage)
+```
+
+```{r}
+library(ggplot2)
+ggplot(winnerspercentage, aes(x = reorder(school, reg_percent_mean), y = reg_percent_mean)) +
+  geom_point(color = "blue") +
+  labs(title = "Average Win Percentage of Schools across Seasons",
+       x = "School",
+       y = "Average Win Percentage") +
+  theme_minimal() +
+  coord_flip()
+
+```
+
+The school that has the most titles (UConn), has the highest average win percentage, but most schools have around 77% average win percentage.
+
+```{r}
+library(ggplot2)
+ggplot(winnerspercentage, aes(x = reorder(school, reg_percent_mean), y = reg_percent_mean)) +
+  geom_pointrange(aes(ymin = reg_percent_mean - reg_percent_sd, ymax = reg_percent_mean + reg_percent_sd),
+    color = "blue"
+  ) +
+  geom_point(color = "blue") +
+  labs(
+    title = "Point Range of Average Win Percentage of Schools 
+    across Seasons",
+    x = "School",
+    y = "Average Win Percentage"
+  ) +
+  theme_minimal() +
+  coord_flip()
+
+```
+
+The school with the most narrow interval is Texas A&M.
+
+```{r}
+ggplot(winnerspercentage, aes(x = reorder(school, reg_percent_mean), y = reg_percent_mean)) +
+  geom_linerange(aes(ymin = reg_percent_mean - reg_percent_sd, ymax = reg_percent_mean + reg_percent_sd),
+    color = "blue"
+  ) +
+  geom_point(color = "blue") +
+  labs(
+    title = "Line Plot of Average Win Percentage of 
+    Schools across Seasons",
+    x = "School",
+    y = "Average Win Percentage"
+  ) +
+  theme_minimal() +
+  coord_flip()
+```

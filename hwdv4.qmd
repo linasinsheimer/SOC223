@@ -1,0 +1,149 @@
+---
+title: "Homework DV 5"
+author: "Lina Sinsheimer"
+format: html
+editor: visual
+embed-resources: true
+---
+
+## Question 1
+
+```{r}
+library(tidyverse)
+tv_ratings <- read_csv("https://raw.githubusercontent.com/vaiseys/dav-course/main/Data/tv_ratings.csv")
+glimpse(tv_ratings)
+```
+
+```{r}
+tv_long <- tv_ratings %>% 
+  group_by(title) %>% 
+  summarise(num_seasons = n()) %>% 
+  ungroup() %>% 
+  left_join(tv_ratings, by = "title") 
+
+tv_long <- tv_long %>% 
+  filter(num_seasons >= 5)
+glimpse(tv_long)
+
+```
+
+```{r}
+library(ggplot2)
+ggplot(tv_long, aes(x = seasonNumber, y = av_rating, group = title)) +
+  geom_line(alpha = 0.5) +
+  geom_point(alpha = 0.5) +
+  labs(title = "Average Rating By Seasons",
+       x = "Season",
+       y = "Average Rating") +
+  theme_minimal()
+```
+
+Though the data is very messy, it looks like as the show goes on and the number of seasons increase, the average rating tends to go down from when the show began.
+
+## Question 2
+
+```{r}
+ggplot(tv_long, aes(x = seasonNumber, y = av_rating, group = title)) +
+  geom_line() +
+  geom_point(alpha = 0.3) +
+  labs(title = "Average Rating By Seasons",
+       x = "Season",
+       y = "Average Rating") +
+  theme_minimal() +
+  facet_wrap(~genres)
+
+```
+
+The shows that tend to last longer are the Crime/Drama/Mystery and Drama/Romance ones.
+
+For some shows, the ratings do change a lot from season to season, like in the Drama/Family/Fantasy show. For other shows like Drama/Fantasy/Family, the ratings do not change that much season to season.
+
+The Drama/Fantasy/Family show whose ratings plummeted was called "Are you Afraid of the Dark?"
+
+## Question 3
+
+```{r}
+library(dplyr)
+high_ratings <- tv_ratings %>%
+  filter(av_rating >= 9)
+glimpse(high_ratings)
+```
+
+```{r}
+ggplot(high_ratings, aes(x = genres)) +
+  geom_bar() +
+  labs(title = "High-Rated TV Shows by Genre",
+       x = "Genre",
+       y = "Amount") +
+  theme_minimal() +
+  coord_flip()
+```
+
+coord_flip flips the x and y axis, which made the genre more readable.
+
+The genre with the most top rated shows is Drama.
+
+## Question 4
+
+```{r}
+comedies_dramas <- tv_ratings %>% 
+  mutate(is_comedy = if_else(str_detect(genres, "Comedy"), 1, 0)) %>% 
+  filter(is_comedy == 1 | genres == "Drama") %>% 
+  mutate(genres = if_else(genres == "Drama", "Drama", "Comedy"))
+
+glimpse(comedies_dramas)
+```
+
+```{r}
+ggplot(comedies_dramas, aes(x = av_rating, fill = genres)) +
+  geom_density(alpha=0.5) +
+  labs(title = "Average Ratings of Comedies and Dramas",
+       x = "Average Rating",
+       y = "Density",
+       fill = "Genre") +
+  theme_minimal() 
+```
+
+There are more dramas that are rated higher, as the peak of the distribution looks like it is slightly higher for dramas than for comedies.
+
+## Question 5
+
+```{r}
+ggplot(comedies_dramas, aes(x = av_rating, fill = genres)) +
+  geom_histogram(bins = 50) +
+  labs(title = "Average Ratings of Comedies and Dramas",
+       x = "Average Rating",
+       y = "Frequency",
+       fill = "Genre") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(comedies_dramas, aes(x = av_rating, color = genres)) +
+  geom_freqpoly(binwidth = 0.5) +
+  labs(title = "Average Ratings of Comedies and Dramas",
+       x = "Average Rating",
+       y = "Frequency",
+       color = "Genre") +
+  theme_minimal()
+
+```
+
+The histogram lets us know that there are far more comedies than dramas, as the density plots are scaled. I think that the histograms give more information about the number of shows that are counted, and you can see the frequency of each bin. Density plots are scaled, which means it is helpful to see the overall shape. Frequency polygons help when you want to compare distributions.
+
+## Question 6
+
+```{r}
+ggplot(comedies_dramas, aes(x = av_rating, y = share)) +
+  geom_bin_2d(bins = 25) +
+  labs(title = "Relationship between Average Rating 
+       and Share of Viewership",
+       x = "Average Rating",
+       y = "Share of Viewership (in millions)",
+       fill = "Genre") +
+  theme_minimal()
+```
+
+The 2D bin plot gives you more information about the exact point, and how many is in that point. For this graph specifically, it shows us that most shows have an average rating of about 8, with less than 3 million viewers, and it shows us that about 125 shows fall within that. For a scatterplot, it would be too hard to see the exact point.
+
+The outlier is a show called Dekalog.
