@@ -1,0 +1,102 @@
+---
+title: "2023-10-10-inclass"
+author: Lina Sinsheimer
+embed-resources: true
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(moderndive)
+library(patchwork)
+glimpse(evals)
+```
+
+```{r}
+ggplot(evals,
+       aes(x = score,
+           y = ethnicity)) +
+  geom_jitter(alpha = .3,
+              height = .2)
+```
+
+```{r}
+ggplot(evals,
+       aes(x = score,
+           y = ethnicity)) +
+  geom_boxplot(coef = 0,
+               outlier.alpha = 0,
+               width = .5) +
+  geom_jitter(alpha = .3,
+              height = .2) 
+```
+
+```{r}
+mod2 <- lm(score ~ ethnicity,
+           data = evals) 
+
+broom::tidy(mod2)
+```
+
+```{r}
+ggplot(evals,
+       aes(x = bty_avg,
+           y = ethnicity)) +
+  geom_jitter(alpha = .3) +
+  geom_smooth(method = "lm",
+              se = FALSE,
+              fullrange = TRUE) +
+  scale_x_continuous(limits = c(0,8.5)) +
+  geom_vline(xintercept = 0,
+             color = "red",
+             linetype = "dotted")
+```
+
+```{r}
+ggplot(evals,
+       aes(x = score,
+           y = ethnicity)) +
+  geom_jitter(alpha = .3) +
+  geom_smooth(method = "lm",     # does this look familiar?
+              se = FALSE)   
+```
+
+```{r}
+evals |> get_correlation(score ~ age) 
+```
+
+```{r}
+evals |> get_correlation(age ~ score) 
+```
+
+```{r}
+evals |> get_correlation(score ~ cls_students) 
+```
+
+```{r}
+ggplot(evals,
+       aes(x = score,
+           y = cls_students)) +
+  geom_jitter(alpha = .3) +
+  geom_smooth(method = "lm",     # does this look familiar?
+              se = FALSE)   
+```
+
+```{r}
+mod3 <- lm(score ~ cls_students,
+           data = evals) 
+
+broom::tidy(mod3)
+```
+
+```{r}
+ggplot(evals,
+       aes(x = score,
+           y = cls_level)) +
+  geom_boxplot(coef = 0,
+               outlier.alpha = 0,
+               width = .5) +
+  geom_jitter(alpha = .3,
+              height = .2)
+```
