@@ -1,0 +1,210 @@
+---
+title: "HW05"
+author: "Lina Sinsheimer"
+format: html
+embed-resources: true
+editor: visual
+---
+
+## Question 1
+
+```{r}
+#| message: false
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+
+twitch_data <- read_csv("https://raw.githubusercontent.com/vaiseys/dav-course/main/Data/twitchdata-update.csv")
+```
+
+```{r}
+library(janitor)
+twitch_data <- clean_names(twitch_data)
+
+colnames(twitch_data)
+```
+
+```{r}
+fiverandom <- twitch_data %>% sample_n(5)
+summary(fiverandom)
+```
+
+When there is a higher number of followers, there is also typically a higher number of average viewers.
+
+```{r}
+avgview_followers <- twitch_data %>% 
+   select(average_viewers, followers)
+
+summary(avgview_followers)
+
+```
+
+The mean of average viewers is 4781, while the mean of followers is 570054. This is interesting because even though the follower count may be high, it does not always indicate that all of your followers will watch the video, hence the average viewers not being equal to the followers.
+
+```{r}
+library(ggplot2)
+
+ggplot(twitch_data, aes(x = followers, y = average_viewers)) +
+  geom_point() +
+  geom_jitter() +
+  labs(title = "Scatterplot of Followers and Average Viewers",
+       x = "Followers",
+       y = "Average Viewers") +
+    theme_minimal(
+    )
+
+```
+
+```{r}
+library(ggplot2)
+
+ggplot(twitch_data, aes(x = followers, y = average_viewers)) +
+  geom_point() +
+  geom_jitter() +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(title = "Scatterplot of Followers and Average Viewers (log)",
+       x = "Followers (log)",
+       y = "Average Viewers (log)") 
+  
+
+```
+
+```{r}
+twitch_data <- twitch_data %>% 
+  mutate(log_viewers = log10(average_viewers), 
+         log_followers = log10(followers))
+```
+
+For the first graph, it is hard to understand the relationship between the two variables, as most of the data is packed in the bottom left of the graph. The second graph shows the correlation much more clearly. It does look like it is a positive correlation.
+
+## Question 2
+
+```{r}
+fit1 <- lm(log_viewers ~ log_followers, data = twitch_data)
+```
+
+```{r}
+library(broom)
+tidyfit <- tidy(fit1)
+```
+
+```{r}
+tidy(fit1)
+```
+
+A 10% increase in followers is associated with a 4.9% increase in the average number of viewers.
+
+This is how I got the 4.9% : 1.1 \^ 0.5 = 1.0488
+
+## Question 3
+
+```{r}
+library(broom)
+pred_data <- augment(fit1)
+
+glimpse(pred_data)
+```
+
+```{r}
+pred_data %>% 
+  ggplot(aes(x = log_followers, 
+             y = log_viewers)) +
+  geom_jitter(alpha = 0.4) + 
+  geom_line(aes(x = log_followers, 
+                y = .fitted), 
+            col = "blue") + 
+  theme_minimal() +
+  labs(subtitle = "Fitted Model and Raw Data", 
+       title = "Followers & Average Viewership", 
+       x = "log (followers)", 
+       y = "log (viewers)")
+```
+
+I do think that this model appropriately describes the relationship.
+
+```{r}
+pred_data %>% 
+  ggplot(aes(x = log_followers, 
+             y = .resid)) +
+  geom_jitter(alpha = 0.4)  + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "blue") +
+  theme_minimal() +
+  labs(
+       title = "Residuals of Followers", 
+       x = "Followers (log)", 
+       y = "Residuals (log)")
+```
+
+The residuals seem to be somewhat randomly scattered along the red line. There are some clear outliers that stray from this line, but most of them are along the y = 0 line.
+
+## Question 4
+
+```{r}
+glimpse(twitch_data)
+```
+
+```{r}
+summary(twitch_data)
+```
+
+```{r}
+library(ggplot2)
+
+ggplot(twitch_data, aes(x = language, y = average_viewers)) +
+  geom_boxplot() +
+  coord_flip() +
+  labs(title = "Boxplot of Average Viewers by Language",
+       x = "Language",
+       y = "Average Viewers")
+```
+
+## Question 5
+
+```{r}
+twitch_data <- twitch_data %>% 
+  mutate(language = as.factor(language), 
+         language = relevel(language, ref = "English"))
+```
+
+```{r}
+twitchlm <- lm(average_viewers ~ language, data = twitch_data)
+tidy(twitchlm)
+```
+
+The expected average number of viewers when the language is English would be around 5113 people, while the rest of . This does match the prediction that English streams might be the most popular.
+
+## Question 6
+
+```{r}
+language <- lm(average_viewers ~ language, data = twitch_data)
+twitch_data2 <- augment(language)
+
+glimpse(language)
+```
+
+```{r}
+summary(twitch_data2)
+```
+
+```{r}
+twitch_data2 %>% 
+  ggplot(aes(x = average_viewers, 
+             y = .resid)) +
+  geom_jitter(alpha = 0.4)  + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  theme_minimal() +
+  scale_x_log10() +
+  scale_x_continuous()
+  labs(
+       title = "Scatterplot of Followers & Residuals", 
+       x = "Followers (log)", 
+       y = "Residuals (log)")
+```
+
+```{r}
+twitch_data2 %>% 
+  filter(.resid > 25000 | .resid < -25000)
+```
+
+There are 13 points the model seems to miss.
