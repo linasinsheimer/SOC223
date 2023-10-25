@@ -1,0 +1,162 @@
+---
+title: "Homework 6"
+author: "Lina Sinsheimer"
+format: html
+embed-resources: true
+editor: visual
+---
+
+## Question 1
+
+```{r}
+#| message: false
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(broom)
+library(moderndive)
+
+theme_set(theme_minimal())
+gender_employment <- read_csv("https://raw.githubusercontent.com/vaiseys/dav-course/main/Data/gender_employment.csv")
+
+glimpse(gender_employment)
+```
+
+```{r}
+gender_employment%>% 
+  ggplot(aes(x = year, y = wage_percent_of_male)) +
+  geom_jitter(alpha = 0.1) + 
+  geom_smooth(method = "lm") + 
+  labs(title = "Women's earnings with respect to men's", 
+       y = "% of Men's Income", 
+       x = "Year")
+```
+
+```{r}
+gender_employment <- gender_employment %>% 
+  mutate(major_category = as.factor(major_category), 
+         major_category = relevel(major_category, ref = "Management, Business, and Financial"))
+```
+
+```{r}
+parallel_model <- lm(wage_percent_of_male ~ year + major_category, data = gender_employment)
+tidyresults <- tidy(parallel_model)
+print(tidyresults)
+
+```
+
+```{r}
+get_regression_table(parallel_model)
+```
+
+The wage percentage of male income for 2015 Sales and Office is calculated by: 0.192\*2015 + -306.718 + 3.326 = 83.488%. This is the slope multiplied by the year, plus the intercept, and then adding the major category on top of that.
+
+The wage percentage of male income for 2016 Service is calculated by: 0.192\*2016 + -306.718 + 6.077 = 86.431%. This is the slope multiplied by the year, plus the intercept, and then adding the major category on top of that.
+
+Overall, every time that a year passes, a woman's wage percentage goes up by 0.192%.
+
+## Question 2
+
+```{r}
+gender_employment %>%
+  ggplot(aes(x = year, y = wage_percent_of_male)) +
+  geom_jitter(alpha = 0.1) +
+  geom_smooth(method = "lm", color = "blue") +
+  facet_wrap(~ major_category) +
+  labs(title = "Women's earnings with respect to men's by major category",
+       y = "% of Men's Income",
+       x = "Year")
+
+```
+
+For the majority of the majors, the slope is quite similar. For the Natural Resources, Construction, and Maintenance, however, the slope does differ from the others. Though the parallel model works alright for the rest of the majors, it does not accurately represent the Natural Resources one.
+
+## Question 3
+
+```{r}
+majorandyear <- lm(wage_percent_of_male ~ year * major_category, data = gender_employment)
+
+tidy(majorandyear)
+```
+
+Computer, Engineering, and Science: 0.72\*2016 + -1370.47 + 1002.85 + -0.49\*2016 = 96.06%
+
+Service: 0.72\*2016 + -1370.47 + 2137.65 + -1.06\*2016 = 81.74%
+
+I got this by slope \* year + intercept + major category + year:major \* year.
+
+## Question 4
+
+The parallel slope model would be warranted when the "additional complexity is warranted," as stated by Occam's Razor. It is beneficial to use the parallel slope model because it can be easier to read and understand and the data shows a common trend among it. If you have a reason to believe that the trends are similar, then it could be better to use the parallel slope model.
+
+## Question 5
+
+```{r}
+simple_fit <- lm(wage_percent_of_male ~ year, data = gender_employment)
+
+tidy_simple_fit <- tidy(simple_fit)
+
+print(tidy_simple_fit)
+
+```
+
+```{r}
+gender_employment %>% 
+  select(year, wage_percent_of_male, percent_female) %>% 
+  cor(use = "complete.obs")
+```
+
+The biggest correlation is the one between the wage percent of male and percent female, with a 0.11 correlation, which indicates a slightly positive correlation. The rest of the relationships have very weak correlations and are quite close to 0.0 This is what I would have expected from the data.
+
+```{r}
+multiple_fit <- lm(wage_percent_of_male ~ year * percent_female, data = gender_employment)
+
+tidy_multiple_fit <- tidy(multiple_fit)
+
+print(tidy_multiple_fit)
+```
+
+These results suggest that every year, the wage gap decreases. The interaction between year and percent female, however, suggests that as time goes on and the amount of female workers also goes up, the wage gap actually increases, which is very surprising for me.
+
+## Question 6
+
+R Squared is the coefficient of determination, and it describes how well the model fits the regression model.
+
+```{r}
+simple_glanced <- glance(simple_fit)
+```
+
+```{r}
+simple_glanced$r.squared
+```
+
+```{r}
+multiple_glanced <- glance(multiple_fit)
+```
+
+```{r}
+multiple_glanced$r.squared
+```
+
+Both of these models are quite close to 0, indicating that our model does not explain a lot about the variation of y.
+
+## A warning sign!
+
+```{r}
+random_numbers <- rnorm(n = nrow(gender_employment), 
+                        mean = 0, 
+                        sd = 4)
+```
+
+```{r}
+gender_employment$random_noise <- random_numbers
+
+# New model 
+random_fit <- lm(wage_percent_of_male ~ year + percent_female + random_noise, data = gender_employment)
+
+random_fit <- glance(random_fit)
+```
+
+```{r}
+random_fit$r.squared
+```
