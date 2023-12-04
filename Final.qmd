@@ -1,0 +1,173 @@
+---
+title: "Final Project"
+author: "Lina Sinsheimer"
+format: html
+editor: visual
+embed-resources: true
+echo: false
+---
+
+```{r}
+#| message: false
+library(tidyverse)
+library(dplyr)
+library(readxl)
+library(ggplot2)
+library(broom)
+library(moderndive)
+library(skimr)
+library(ggeffects)
+wwcteam <- read_excel("/Users/linasinsheimer/Desktop/SOC223/WWCTEAM.xlsx")
+wwcplayers <- read_excel("/Users/linasinsheimer/Desktop/SOC223/Untitled spreadsheet-2.xlsx")
+```
+
+For my final project, I am using the 2023 Women's World Cup Data to determine if a player's offensive production is linked with a player's age. I am doing this on a team level (a sample size of 32 squads) and an individual level (a sample size of 618 players). I am measuring offensive production by total goals and assists produced (*not expected*).
+
+## Exploratory Data Analysis
+
+```{r}
+library(dplyr)
+
+avg_age_by_team <- wwcteam %>%
+  group_by(Squad) %>%
+  summarise(Avg_Age = weighted.mean(Age, Min, na.rm = TRUE))
+
+library(ggplot2)
+
+ggplot(avg_age_by_team, aes(x = reorder(Squad, -Avg_Age),
+                            y = Avg_Age)) +
+  geom_point(stat = "identity") +
+  theme_minimal() + 
+  labs(title = "Average Age by Team",
+       x = "Team",
+       y = "Average Age") +
+  coord_flip()  
+
+```
+
+This first graph shows the average age of each team, with Haiti having the youngest average age and the Korea Republic having the oldest average age.
+
+```{r, message = FALSE, warning=FALSE}
+
+ggplot(wwcteam, aes(x = reorder(Squad, -Min), y = Min)) +
+  geom_point(stat = "identity") +
+  theme_minimal() + 
+  labs(title = "Minutes by Team",
+       x = "Team",
+       y = "Minutes") +
+  coord_flip()  
+```
+
+To properly understand goals and assists, we must account for the amount of minutes each team and player has played; if a team or player has played more minutes, the probability of them scoring a goal or notching an assist is higher. The graph above gives us an idea about the distribution of minutes each team played.
+
+```{r, message = FALSE, warning=FALSE}
+ggplot(wwcplayers, aes(x = Age )) +
+  geom_histogram(color = "white") +
+  theme_minimal() +
+  labs(title = "Number of Players by Age",
+       x = "Age",
+       y = "Number of Players")
+mean_age <- mean(wwcplayers$Age, na.rm = TRUE)
+```
+
+Not only do I want to look at the average age by team, but I want to see how age affects offensive production on an individual level. To do this, I need to see what the distribution of age is within the World Cup players. The mean age of 618 players at the World Cup is 26.44 years old.
+
+```{r, message = FALSE, warning=FALSE}
+ggplot(wwcplayers, aes(x = Age )) +
+  geom_histogram(color = "white") +
+  theme_minimal() +
+  facet_wrap(~ Squad) + 
+  labs(title = "Number of Players by Age on Each Team",
+       x = "Age",
+       y = "Number of Players")
+```
+
+The last demographic graph that I provided shows the age distribution by which team they are on. Here we can specifically see the age of each player on the team.
+
+## Linear Regressions
+
+```{r}
+
+teamage <- lm(GlsandAst ~ Age + Min, data = wwcteam)
+
+summary(teamage)
+
+ggpredict(teamage, terms="Age") %>% 
+  plot() +
+  labs(title = "Relationship between Age and Team's Offensive Production",
+       x = "Age",
+       y = "Offensive Production (Goals and Assists)")
+
+```
+
+Using this model, we can see two different things:
+
+On average, we expect the team's combined goals and assists to decrease by 0.22 for every year that the team's average age gets older. This means that older teams tend to contribute less in terms of goals and assists compared to younger teams, when considering the playing time remains the same.
+
+An R-squared of 0.71 means that around 71% of the variation in combined goals and assists can be explained by the player's age and the time they spent on the field. So, based on this model, these factors seem to have a moderate influence on a team's offensive contribution.
+
+```{r}
+tidy(teamage)
+```
+
+```{r}
+playerage <- lm(GlsandAst ~ Age + Min + Pos, data = wwcplayers)
+
+summary(playerage)
+
+ggpredict(playerage, terms="Age") %>% 
+  plot() +
+    labs(title = "Relationship between Age and Individual Offensive Production",
+       x = "Age",
+       y = "Offensive Production (Goals and Assists)")
+
+```
+
+On average, we expect a player's combined goals and assists to decrease by 0.003 for every year that the team's average age gets older. This means that older players tend to contribute slightly less in terms of goals and assists compared to younger teams, assuming all of the other variables (Age, Minutes, Position) remain the same.
+
+An R-squared of 0.27 means that around 28% of the variation in combined goals and assists can be explained by the player's age, the time they spent on the field, and position. So, based on this model, these factors seem to have a small influence on a player's offensive contribution.
+
+## Quadratic Models
+
+```{r}
+teamage2 <- lm(GlsandAst ~ Age + I(Age^2) + Min, data = wwcteam)
+summary(teamage2)
+ggpredict(teamage2,terms = "Age") %>% 
+  plot +
+    labs(title = "Relationship between Age and Offensive Production by Team",
+       x = "Age",
+       y = "Offensive Production (Goals and Assists)")
+
+```
+
+This quadratic model assumes that the relationship between age and offensive production is not linear, and accounts for more complexity within the relationship, rather than assuming offensive production is continuously decreasing as people age. Based on the model, it looks like the peak age is about 26 years old.
+
+```{r}
+playerage2 <- lm(GlsandAst ~ Age + I(Age^2) + Min + Pos, data = wwcplayers)
+tidy(playerage2, conf.int=TRUE)
+ggpredict(playerage2,terms = "Age") %>% 
+  plot +
+    labs(title = "Relationship between Age and Individual Offensive Production",
+       x = "Age",
+       y = "Offensive Production (Goals and Assists)")
+```
+
+This quadratic model assumes that the relationship between age and offensive production is not linear, and accounts for more complexity within the relationship, rather than assuming offensive production is continuously decreasing as people age. Based on the model, it looks like the peak age is after 40 years old, but this is because there are only 2 players over the age of 40 within our data set.
+
+## Discussion
+
+```{r}
+AIC(teamage, teamage2)
+```
+
+```{r}
+AIC(playerage, playerage2)
+```
+
+AIC stands for Akaike Information Criterion and it is a tool used to choose between different models and how they are performing.
+
+When comparing the linear and quadratic regression models, both models are quite similar, but the linear model for both the team and individual level, as the linear model has both a slightly lower AIC and a lower degree of freedom.
+
+One of the most notable complications is that the sample size. For the team level, there are only 32 teams, which is a very small number. It would be helpful to use this data in tandem with future World Cup data to get a more accurate result. For the player level, while there are 618 players, each age is not equally represented, which results in the peak age being 40 years old in the individual quadratic model. If we had 100 players each for ages 20-30 years old, then this would give us a more accurate idea.
+
+The Women's World Cup has only taken place 9 times (the first one being in 1991). It has only been expanded to 32 teams in the most recent edition (2023). This results in a lack of equity in investments, which can also have a large effect on team's performance. For example, the Jamaican 2023 Women's World Cup Team had to start a GoFundMe to raise money for travel expenses, but the US Women's National Team have millions of dollars in investment. This will obviously affect the team's results. To be able to have accurate data, we have to ensure that each team is equally set up for success.
