@@ -7,7 +7,7 @@ embed-resources: true
 echo: false
 ---
 
-```{r}
+```{r, warning=FALSE}
 #| message: false
 library(tidyverse)
 library(dplyr)
@@ -19,6 +19,13 @@ library(skimr)
 library(ggeffects)
 wwcteam <- read_excel("/Users/linasinsheimer/Desktop/SOC223/WWCTEAM.xlsx")
 wwcplayers <- read_excel("/Users/linasinsheimer/Desktop/SOC223/Untitled spreadsheet-2.xlsx")
+wwcplayers <- wwcplayers %>%
+  separate(Squad, into = c("Code", "CountryName"), sep = " ", remove = FALSE) 
+  
+wwcplayers <- select(wwcplayers, -Squad, -Code)
+
+wwcplayers <- wwcplayers %>%
+  rename(Squad = CountryName)
 ```
 
 For my final project, I am using the 2023 Women's World Cup Data to determine if a player's offensive production is linked with a player's age. I am doing this on a team level (a sample size of 32 squads) and an individual level (a sample size of 618 players). I am measuring offensive production by total goals and assists produced (*not expected*).
@@ -87,17 +94,18 @@ The last demographic graph that I provided shows the age distribution by which t
 ## Linear Regressions
 
 ```{r}
-
 teamage <- lm(GlsandAst ~ Age + Min, data = wwcteam)
-
-summary(teamage)
-
 ggpredict(teamage, terms="Age") %>% 
   plot() +
   labs(title = "Relationship between Age and Team's Offensive Production",
        x = "Age",
        y = "Offensive Production (Goals and Assists)")
 
+```
+
+```{r}
+tidy(teamage) %>% 
+  knitr::kable(digits=2)
 ```
 
 Using this model, we can see two different things:
@@ -107,20 +115,19 @@ On average, we expect the team's combined goals and assists to decrease by 0.22 
 An R-squared of 0.71 means that around 71% of the variation in combined goals and assists can be explained by the player's age and the time they spent on the field. So, based on this model, these factors seem to have a moderate influence on a team's offensive contribution.
 
 ```{r}
-tidy(teamage)
-```
-
-```{r}
 playerage <- lm(GlsandAst ~ Age + Min + Pos, data = wwcplayers)
-
-summary(playerage)
-
 ggpredict(playerage, terms="Age") %>% 
   plot() +
     labs(title = "Relationship between Age and Individual Offensive Production",
        x = "Age",
        y = "Offensive Production (Goals and Assists)")
 
+```
+
+```{r}
+tidy(playerage) %>% 
+   head(3) %>%
+  knitr::kable(digits=2)
 ```
 
 On average, we expect a player's combined goals and assists to decrease by 0.003 for every year that the team's average age gets older. This means that older players tend to contribute slightly less in terms of goals and assists compared to younger teams, assuming all of the other variables (Age, Minutes, Position) remain the same.
@@ -140,6 +147,11 @@ ggpredict(teamage2,terms = "Age") %>%
 
 ```
 
+```{r}
+tidy(teamage2) %>% 
+  knitr::kable(digits=2)
+```
+
 This quadratic model assumes that the relationship between age and offensive production is not linear, and accounts for more complexity within the relationship, rather than assuming offensive production is continuously decreasing as people age. Based on the model, it looks like the peak age is about 26 years old.
 
 ```{r}
@@ -150,6 +162,13 @@ ggpredict(playerage2,terms = "Age") %>%
     labs(title = "Relationship between Age and Individual Offensive Production",
        x = "Age",
        y = "Offensive Production (Goals and Assists)")
+```
+
+```{r}
+tidy(playerage2) %>% 
+   head(4) %>%
+  knitr::kable(digits=2)
+  
 ```
 
 This quadratic model assumes that the relationship between age and offensive production is not linear, and accounts for more complexity within the relationship, rather than assuming offensive production is continuously decreasing as people age. Based on the model, it looks like the peak age is after 40 years old, but this is because there are only 2 players over the age of 40 within our data set.
