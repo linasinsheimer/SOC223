@@ -189,4 +189,6 @@ When comparing the linear and quadratic regression models, both models are quite
 
 One of the most notable complications is that the sample size. For the team level, there are only 32 teams, which is a very small number. It would be helpful to use this data in tandem with future World Cup data to get a more accurate result. For the player level, while there are 618 players, each age is not equally represented, which results in the peak age being 40 years old in the individual quadratic model. If we had 100 players each for ages 20-30 years old, then this would give us a more accurate idea.
 
+For all of these models, the p value is very large, which means that our data does not strongly support our hypothesis that age has a significant effect on offensive production.
+
 The Women's World Cup has only taken place 9 times (the first one being in 1991). It has only been expanded to 32 teams in the most recent edition (2023). This results in a lack of equity in investments, which can also have a large effect on team's performance. For example, the Jamaican 2023 Women's World Cup Team had to start a GoFundMe to raise money for travel expenses, but the US Women's National Team have millions of dollars in investment. This will obviously affect the team's results. To be able to have accurate data, we have to ensure that each team is equally set up for success.
